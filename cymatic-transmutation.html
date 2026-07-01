@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cymatic Transmutation — Felipe Sayao Studio</title>
+<meta name="description" content="An alchemical Chladni cymatics visualizer. Sound, dissolved into chaos, then coagulated into geometric form. Built by Felipe Sayao Studio.">
+<style>
+  /* ============================================================
+     CYMATIC TRANSMUTATION — self-contained embed
+     Built by Felipe Sayao Studio · felipesayao.studio
+     Drop into a Webflow Embed, or host the file directly.
+     Only external dependency: Three.js (CDN) + Inter (Google Fonts).
+     ============================================================ */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+  .fss-cy *{box-sizing:border-box;}
+  .fss-cy{
+    /* tokens */
+    --cy-coral:#D85A30;
+    --cy-coral-2:#C24A22;
+    --cy-copper:#E8915F;
+    --cy-mercury:#DBE1E6;
+    --cy-ink:#141210;
+    --cy-ink-soft:#4b463f;
+    --cy-muted:#9a9187;
+    --cy-line:rgba(20,18,16,.14);
+    --cy-line-strong:rgba(20,18,16,.28);
+    --cy-surface:#faf7f2;
+    --cy-radius:9px;
+
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--cy-ink);
+    max-width:640px;
+    margin:0 auto;
+    padding:28px 20px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .fss-cy .cy-kick{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--cy-muted);font-weight:500;}
+  .fss-cy .cy-disp{font-weight:500;letter-spacing:-0.01em;}
+  .fss-cy .cy-head{text-align:center;}
+  .fss-cy .cy-sub{font-size:13px;color:var(--cy-ink-soft);margin-top:6px;letter-spacing:.04em;}
+
+  .fss-cy .cy-btn{font-family:inherit;font-size:13px;padding:7px 13px;border-radius:var(--cy-radius);border:1px solid var(--cy-line-strong);background:transparent;color:var(--cy-ink);cursor:pointer;transition:all .15s;line-height:1;}
+  .fss-cy .cy-btn:hover{background:rgba(20,18,16,.05);}
+  .fss-cy .cy-btn:focus-visible{outline:2px solid var(--cy-coral);outline-offset:2px;}
+  .fss-cy .cy-btn.on{border:1.5px solid var(--cy-coral);background:rgba(216,90,48,.10);color:var(--cy-coral-2);padding:6.5px 12.5px;}
+
+  .fss-cy .cy-note{font-family:inherit;font-size:12px;padding:6px 11px;min-width:40px;text-align:center;border-radius:var(--cy-radius);border:1px solid var(--cy-line);background:transparent;color:var(--cy-ink-soft);cursor:pointer;transition:all .15s;line-height:1;}
+  .fss-cy .cy-note:hover{background:rgba(20,18,16,.05);}
+  .fss-cy .cy-note:focus-visible{outline:2px solid var(--cy-coral);outline-offset:2px;}
+  .fss-cy .cy-note.on{border-color:var(--cy-coral);color:var(--cy-coral-2);background:rgba(216,90,48,.10);}
+
+  .fss-cy .cy-sw{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--cy-ink-soft);cursor:pointer;padding:5px 9px;border-radius:var(--cy-radius);border:1px solid var(--cy-line);background:transparent;font-family:inherit;transition:all .15s;line-height:1;}
+  .fss-cy .cy-sw:hover{background:rgba(20,18,16,.05);}
+  .fss-cy .cy-sw:focus-visible{outline:2px solid var(--cy-coral);outline-offset:2px;}
+  .fss-cy .cy-sw .cy-dot{width:12px;height:12px;border-radius:50%;}
+  .fss-cy .cy-sw.on{border-color:var(--cy-ink);color:var(--cy-ink);}
+
+  .fss-cy .cy-grp{display:flex;gap:8px;align-items:center;}
+  .fss-cy .cy-lbl{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cy-muted);}
+  .fss-cy .cy-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;}
+
+  .fss-cy .cy-stage{position:relative;align-self:center;width:100%;max-width:540px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;}
+  .fss-cy .cy-bloom{position:absolute;width:115%;height:115%;border-radius:50%;background:radial-gradient(circle at 32% 64%, rgba(232,138,91,.30), rgba(216,90,48,.06) 42%, transparent 66%);filter:blur(8px);}
+  .fss-cy .cy-plate{position:absolute;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 50% 40%, #16130c 0%, #0c0a07 58%, #060503 100%);box-shadow:inset 0 0 70px rgba(0,0,0,.85), 0 18px 60px rgba(0,0,0,.45);overflow:hidden;}
+  .fss-cy .cy-canvas{position:absolute;width:100%;height:100%;border-radius:50%;}
+  .fss-cy .cy-geo{position:absolute;width:100%;height:100%;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .5s ease;}
+  .fss-cy .cy-nut{position:absolute;width:9px;height:9px;border-radius:50%;background:#2a2620;box-shadow:0 0 0 2px rgba(0,0,0,.6), inset 0 0 3px rgba(255,255,255,.12);}
+
+  .fss-cy .cy-meta-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .fss-cy .cy-name{font-size:19px;}
+  .fss-cy .cy-meta{font-size:13px;color:var(--cy-muted);}
+  .fss-cy .cy-wavewrap{align-self:center;width:100%;max-width:540px;}
+  .fss-cy .cy-wave{width:100%;height:48px;display:block;}
+  .fss-cy input[type=range]{accent-color:var(--cy-coral);cursor:pointer;}
+  .fss-cy input[type=range]:focus-visible{outline:2px solid var(--cy-coral);outline-offset:3px;}
+  .fss-cy .cy-volout{font-size:12px;color:var(--cy-muted);min-width:34px;}
+
+  /* footer strip — mirrors the Magic Font Calculator */
+  .fss-cy .cy-foot{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    margin-top:8px;padding-top:18px;border-top:1px solid var(--cy-line);
+  }
+  .fss-cy .cy-author{display:flex;align-items:center;gap:12px;min-width:0;}
+  .fss-cy .cy-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#e7e1d8;flex:none;border:1px solid var(--cy-line);}
+  .fss-cy .cy-author-txt{display:flex;flex-direction:column;line-height:1.3;min-width:0;}
+  .fss-cy .cy-author-name{font-weight:600;font-size:14px;color:var(--cy-ink);}
+  .fss-cy .cy-author-role{font-size:13px;color:var(--cy-muted);}
+  .fss-cy .cy-cta{
+    display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:14px;font-weight:500;
+    padding:11px 18px;border-radius:999px;border:1px solid var(--cy-coral);
+    color:var(--cy-coral-2);background:rgba(216,90,48,.06);text-decoration:none;cursor:pointer;transition:all .18s;white-space:nowrap;
+  }
+  .fss-cy .cy-cta:hover{background:var(--cy-coral);color:#fff;}
+  .fss-cy .cy-cta:focus-visible{outline:2px solid var(--cy-coral);outline-offset:2px;}
+  .fss-cy .cy-cta svg{width:16px;height:16px;flex:none;}
+
+  @media (max-width:480px){
+    .fss-cy{padding:20px 14px 16px;}
+    .fss-cy .cy-foot{justify-content:center;text-align:center;}
+    .fss-cy .cy-cta{width:100%;justify-content:center;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .fss-cy .cy-geo{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="fss-cy" id="fss-cy">
+  <div class="cy-head">
+    <div class="cy-kick">Solve et Coagula</div>
+    <div class="cy-disp cy-sub">sound, dissolved into chaos &mdash; then coagulated into form</div>
+  </div>
+
+  <div class="cy-stage" id="cy-stage">
+    <div class="cy-bloom"></div>
+    <div class="cy-plate"></div>
+    <canvas class="cy-canvas" id="cy-cv"></canvas>
+    <canvas class="cy-geo" id="cy-geo"></canvas>
+    <div class="cy-nut"></div>
+  </div>
+
+  <div class="cy-meta-row">
+    <span class="cy-name cy-disp" id="cy-name">Piano</span>
+    <span class="cy-meta" id="cy-meta">mode 4,3 &middot; C4 &middot; 262 Hz</span>
+  </div>
+
+  <div class="cy-wavewrap"><canvas class="cy-wave" id="cy-wave"></canvas></div>
+
+  <div class="cy-row" id="cy-inst"></div>
+
+  <div class="cy-row">
+    <span style="font-size:13px;color:var(--cy-ink-soft);">Strike</span>
+    <div class="cy-row" id="cy-notes" style="gap:6px;"></div>
+    <button class="cy-btn" id="cy-play" aria-label="Play scale">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Play scale</button>
+  </div>
+
+  <div class="cy-row">
+    <div class="cy-grp">
+      <span class="cy-lbl">Sand</span>
+      <div class="cy-grp" id="cy-pal" style="gap:8px;"></div>
+    </div>
+    <div class="cy-grp">
+      <button class="cy-sw" id="cy-geotoggle" aria-pressed="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 2 20h20L12 3Z"/></svg> Geometry</button>
+      <div class="cy-grp" id="cy-palg" style="gap:8px;"></div>
+    </div>
+  </div>
+
+  <div class="cy-row">
+    <button class="cy-btn" id="cy-mute" style="padding:6px 9px;" aria-label="Mute">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-3px;" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3Zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z"/></svg></button>
+    <input type="range" id="cy-vol" min="0" max="100" step="1" value="55" style="width:130px;" aria-label="Volume">
+    <span class="cy-volout" id="cy-volout">55%</span>
+  </div>
+
+  <!-- Footer strip — mirrors the Magic Font Calculator -->
+  <div class="cy-foot">
+    <div class="cy-author">
+      <img class="cy-avatar" id="cy-avatar" alt="Felipe Sayao"
+           src="REPLACE_WITH_GITHUB_RAW_AVATAR_URL"
+           onerror="this.style.visibility='hidden'">
+      <div class="cy-author-txt">
+        <span class="cy-author-name">Built by Felipe Sayao Studio</span>
+        <span class="cy-author-role">Creative Alchemist and Creative Director</span>
+      </div>
+    </div>
+    <a class="cy-cta" href="mailto:hello@felipesayao.studio?subject=Magnify%20my%20project">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      Magnify your projects
+    </a>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  if(!window.THREE){console.warn('Cymatic Transmutation: Three.js failed to load.');return;}
+  const PI=Math.PI;
+  const root=document.getElementById('fss-cy');
+  const $=id=>document.getElementById(id);
+  const cv=$('cy-cv');
+  const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  renderer.setClearColor(0x000000,0);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  const RES=640; renderer.setSize(RES,RES,false);
+  const scene=new THREE.Scene();
+  const cam=new THREE.OrthographicCamera(-1,1,1,-1,0,10); cam.position.z=1;
+
+  const metals=[
+    {id:'copp',sym:'\u2640',name:'Copper',hex:'#E8915F',line:'#E8915F'},
+    {id:'merc',sym:'\u263F',name:'Mercury',hex:'#DBE1E6',line:'#CBD4DB'}
+  ];
+  let palSand=metals[0], palGeo=metals[1];
+
+  function dustSprite(){
+    const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d');
+    const rad=g.createRadialGradient(32,32,0,32,32,32);
+    rad.addColorStop(0,'rgba(255,255,255,1)');rad.addColorStop(.35,'rgba(255,255,255,.55)');rad.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=rad; g.fillRect(0,0,64,64);
+    const t=new THREE.Texture(c); t.needsUpdate=true; return t;
+  }
+  const COUNT=16000, R=0.47;
+  const px=new Float32Array(COUNT), py=new Float32Array(COUNT), pos=new Float32Array(COUNT*3);
+  for(let i=0;i<COUNT;i++){const a=Math.random()*PI*2,r=Math.sqrt(Math.random())*R;px[i]=0.5+Math.cos(a)*r;py[i]=0.5+Math.sin(a)*r;pos[i*3]=px[i]*2-1;pos[i*3+1]=py[i]*2-1;}
+  const geoBuf=new THREE.BufferGeometry(); geoBuf.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const mat=new THREE.PointsMaterial({size:2.2,map:dustSprite(),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:false,color:new THREE.Color(palSand.hex)});
+  scene.add(new THREE.Points(geoBuf,mat));
+
+  const notes=[
+    {label:'C3',base:[2,1],freq:130.81},{label:'G3',base:[3,2],freq:196.00},{label:'C4',base:[4,3],freq:261.63},
+    {label:'E4',base:[5,2],freq:329.63},{label:'G4',base:[5,4],freq:392.00},{label:'C5',base:[7,3],freq:523.25},{label:'E5',base:[8,5],freq:659.25}
+  ];
+  const instruments=[
+    {id:'fork',name:'Tuning fork',harm:[1],atk:.01,rel:2.4},
+    {id:'flute',name:'Flute',harm:[1,0.12],atk:.07,rel:1.2},
+    {id:'piano',name:'Piano',harm:[1,0.4,0.22,0.12],atk:.005,rel:1.5},
+    {id:'guitar',name:'Guitar',harm:[1,0.5,0.38,0.3,0.2],atk:.004,rel:1.2},
+    {id:'violin',name:'Violin',harm:[1,0.6,0.5,0.42,0.34,0.28],atk:.11,rel:1.8},
+    {id:'bowl',name:'Singing bowl',harm:[1,0.5,0.3],mults:[1,1.66,2.32],atk:.02,rel:4.0}
+  ];
+  let inst=instruments[2], noteIdx=2, modes=[], strike=0;
+  let trans=1, transDur=0, swapped=true, pendingInst=inst, pendingIdx=noteIdx, geoOn=false;
+
+  function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+  function easeInOut(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+  function buildModes(ins,base){
+    const map={},K=ins.harm.length;
+    for(let k=1;k<=K;k++){const mult=ins.mults?ins.mults[k-1]:Math.sqrt(k);const n=clamp(Math.round(base[0]*mult),1,10),m=clamp(Math.round(base[1]*mult),1,10);const key=n+'_'+m;map[key]=(map[key]||0)+ins.harm[k-1];}
+    return Object.keys(map).map(k=>{const[n,m]=k.split('_').map(Number);return[n,m,map[k]];}).sort((a,b)=>b[2]-a[2]).slice(0,4);
+  }
+  function field(x,y){let f=0;for(let i=0;i<modes.length;i++){const n=modes[i][0],m=modes[i][1],a=modes[i][2];f+=a*(Math.cos(n*PI*x)*Math.cos(m*PI*y)-Math.cos(m*PI*x)*Math.cos(n*PI*y));}return f;}
+
+  let actx=null,master=null,muted=false,vol=0.55,livePartials=null,liveT0=0,liveDur=0;
+  function ensureAudio(){if(!actx){actx=new(window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=0.29*vol;master.connect(actx.destination);}if(actx.state==='suspended')actx.resume();}
+  function playNote(freq,ins){
+    ensureAudio();
+    livePartials=ins.harm.map((amp,k)=>({f:freq*(ins.mults?ins.mults[k]:(k+1)),a:amp})); liveT0=performance.now()/1000; liveDur=ins.atk+ins.rel;
+    if(muted)return; const now=actx.currentTime,env=actx.createGain();env.connect(master);
+    env.gain.setValueAtTime(0.0001,now);env.gain.linearRampToValueAtTime(1,now+ins.atk);env.gain.exponentialRampToValueAtTime(0.0008,now+ins.atk+ins.rel);
+    ins.harm.forEach((amp,k)=>{if(amp<=0)return;const o=actx.createOscillator();o.type='sine';o.frequency.value=freq*(ins.mults?ins.mults[k]:(k+1));const g=actx.createGain();g.gain.value=amp;o.connect(g);g.connect(env);o.start(now);o.stop(now+ins.atk+ins.rel+0.05);});
+  }
+
+  function trigger(ins,idx,sound){pendingInst=ins;pendingIdx=idx;swapped=false;trans=0;transDur=0.95;strike=1;if(sound)playNote(notes[idx].freq,ins);inst=ins;noteIdx=idx;$('cy-name').textContent=ins.name;}
+  function applyMeta(){const m=modes[0]||[0,0];$('cy-meta').innerHTML='mode '+m[0]+','+m[1]+' &middot; '+notes[noteIdx].label+' &middot; '+Math.round(notes[noteIdx].freq)+' Hz';}
+
+  // ---- geometry overlay ----
+  const gcv=$('cy-geo'),gctx=gcv.getContext('2d');
+  function sizeGeo(){const s=(gcv.clientWidth||520);gcv.width=s*2;gcv.height=s*2;}
+  const PHI=1.618033988749;
+  function drawGeo(){
+    const w=gcv.width,h=gcv.height,cx=w/2,cy=h/2,rad=w/2*0.94;gctx.clearRect(0,0,w,h);const col=palGeo.line;
+    const N=72;gctx.lineWidth=2;gctx.strokeStyle=col;gctx.globalAlpha=0.85;gctx.beginPath();
+    function interp(xa,ya,fa,xb,yb,fb){const t=fa/(fa-fb);return[xa+(xb-xa)*t,ya+(yb-ya)*t];}
+    for(let i=0;i<N;i++){for(let j=0;j<N;j++){const x0=(i/N),x1=((i+1)/N),y0=(j/N),y1=((j+1)/N);
+      if(Math.hypot((x0+x1)/2-0.5,(y0+y1)/2-0.5)>0.47)continue;
+      const f00=field(x0,y0),f10=field(x1,y0),f11=field(x1,y1),f01=field(x0,y1);
+      const X0=cx+(x0-0.5)*2*rad,X1=cx+(x1-0.5)*2*rad,Y0=cy+(y0-0.5)*2*rad,Y1=cy+(y1-0.5)*2*rad;const pts=[];
+      if((f00<0)!==(f10<0))pts.push(interp(X0,Y0,f00,X1,Y0,f10));
+      if((f10<0)!==(f11<0))pts.push(interp(X1,Y0,f10,X1,Y1,f11));
+      if((f11<0)!==(f01<0))pts.push(interp(X1,Y1,f11,X0,Y1,f01));
+      if((f01<0)!==(f00<0))pts.push(interp(X0,Y1,f01,X0,Y0,f00));
+      if(pts.length>=2){gctx.moveTo(pts[0][0],pts[0][1]);gctx.lineTo(pts[1][0],pts[1][1]);}}}
+    gctx.stroke();
+    gctx.globalAlpha=0.5;gctx.lineWidth=1.4;gctx.strokeStyle=col;gctx.beginPath();gctx.arc(cx,cy,rad,0,PI*2);gctx.stroke();
+    gctx.globalAlpha=0.28;gctx.beginPath();gctx.moveTo(cx-rad,cy);gctx.lineTo(cx+rad,cy);gctx.moveTo(cx,cy-rad);gctx.lineTo(cx,cy+rad);gctx.stroke();
+    let r=rad;for(let k=0;k<4;k++){r/=PHI;gctx.beginPath();gctx.arc(cx,cy,r,0,PI*2);gctx.stroke();}
+    const sym=Math.max(3,((modes[0]?modes[0][0]:3)+(modes[0]?modes[0][1]:2)));
+    gctx.globalAlpha=0.6;gctx.lineWidth=1.6;gctx.beginPath();
+    for(let v=0;v<=sym;v++){const a=-PI/2+v/sym*PI*2;const X=cx+Math.cos(a)*rad,Y=cy+Math.sin(a)*rad;v===0?gctx.moveTo(X,Y):gctx.lineTo(X,Y);}gctx.stroke();
+    gctx.globalAlpha=0.75;gctx.fillStyle=col;gctx.font='600 '+(w*0.022)+'px Inter, sans-serif';
+    gctx.fillText('\u03C6 1 : 1.618',cx-rad+8,cy+rad-10);gctx.fillText(sym+'-fold',cx+rad-72,cy-rad+22);gctx.globalAlpha=1;
+  }
+
+  // ---- waveform ----
+  const wcv=$('cy-wave'),wctx=wcv.getContext('2d');
+  function sizeWave(){const wd=wcv.clientWidth||520;wcv.width=wd*2;wcv.height=96;}
+  sizeWave();window.addEventListener('resize',()=>{sizeWave();if(geoOn){sizeGeo();drawGeo();}});
+  function drawWave(now){
+    const w=wcv.width,h=wcv.height;wctx.clearRect(0,0,w,h);let amp=0;
+    if(livePartials){const el=now-liveT0;amp=Math.max(0,1-el/liveDur);}
+    wctx.lineWidth=2;wctx.strokeStyle=amp>0.02?'#D85A30':'#9a9187';wctx.globalAlpha=amp>0.02?(0.45+0.55*amp):0.4;wctx.beginPath();
+    const mid=h/2,t=now*2.2;
+    for(let xp=0;xp<=w;xp+=2){const u=xp/w;let y=0;
+      if(livePartials&&amp>0.02){let sum=0,norm=0;for(const p of livePartials){sum+=p.a*Math.sin(u*PI*2*(p.f/130)+t);norm+=p.a;}y=(sum/norm)*amp;}
+      else{y=Math.sin(u*PI*2*2+t)*0.06;}
+      const yy=mid-y*(h*0.40);xp===0?wctx.moveTo(xp,yy):wctx.lineTo(xp,yy);}
+    wctx.stroke();wctx.globalAlpha=1;
+  }
+
+  function frame(){
+    const now=performance.now()/1000;
+    if(trans<1)trans=Math.min(1,trans+(1/60)/transDur);
+    const e=easeInOut(trans),dissolve=Math.sin(e*PI);
+    if(!swapped&&e>=0.5){modes=buildModes(pendingInst,notes[pendingIdx].base);swapped=true;applyMeta();if(geoOn)drawGeo();}
+    const vib=0.004+0.05*strike+0.075*dissolve;
+    for(let i=0;i<COUNT;i++){let x=px[i],y=py[i];const amp=Math.abs(field(x,y));const d=vib*amp+0.0007+0.02*dissolve;
+      x+=(Math.random()-0.5)*d*2;y+=(Math.random()-0.5)*d*2;const dx=x-0.5,dy=y-0.5,r2=dx*dx+dy*dy;
+      if(r2>R*R){const r=Math.sqrt(r2);x=0.5+dx/r*R*0.99;y=0.5+dy/r*R*0.99;}px[i]=x;py[i]=y;pos[i*3]=x*2-1;pos[i*3+1]=y*2-1;}
+    geoBuf.attributes.position.needsUpdate=true;strike*=0.95;
+    renderer.render(scene,cam);drawWave(now);
+    requestAnimationFrame(frame);
+  }
+
+  // ---- controls ----
+  const instWrap=$('cy-inst');
+  instruments.forEach(ins=>{const b=document.createElement('button');b.className='cy-btn'+(ins.id===inst.id?' on':'');b.textContent=ins.name;b.onclick=()=>{instWrap.querySelectorAll('.cy-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');trigger(ins,noteIdx,true);};instWrap.appendChild(b);});
+  const noteWrap=$('cy-notes');
+  notes.forEach((nt,i)=>{const b=document.createElement('button');b.className='cy-note'+(i===noteIdx?' on':'');b.textContent=nt.label;b.onclick=()=>{noteWrap.querySelectorAll('.cy-note').forEach(x=>x.classList.remove('on'));b.classList.add('on');trigger(inst,i,true);};noteWrap.appendChild(b);});
+
+  const palWrap=$('cy-pal');
+  metals.forEach((pp,i)=>{const b=document.createElement('button');b.className='cy-sw'+(i===0?' on':'');b.innerHTML='<span class="cy-dot" style="background:'+pp.hex+'"></span>'+pp.sym+' '+pp.name;b.onclick=()=>{palSand=pp;mat.color.set(pp.hex);palWrap.querySelectorAll('.cy-sw').forEach(x=>x.classList.remove('on'));b.classList.add('on');};palWrap.appendChild(b);});
+  const palgWrap=$('cy-palg');
+  metals.forEach((pp,i)=>{const b=document.createElement('button');b.className='cy-sw'+(i===1?' on':'');b.innerHTML='<span class="cy-dot" style="background:'+pp.line+'"></span>'+pp.sym;b.title=pp.name+' lines';b.onclick=()=>{palGeo=pp;palgWrap.querySelectorAll('.cy-sw').forEach(x=>x.classList.remove('on'));b.classList.add('on');if(geoOn)drawGeo();};palgWrap.appendChild(b);});
+
+  const geoBtn=$('cy-geotoggle');
+  geoBtn.onclick=()=>{geoOn=!geoOn;geoBtn.classList.toggle('on',geoOn);geoBtn.setAttribute('aria-pressed',geoOn);gcv.style.opacity=geoOn?'1':'0';if(geoOn){sizeGeo();drawGeo();}};
+
+  let playing=false,timer=null;const seq=[0,2,4,2,5,4,2,1];
+  const playBtn=$('cy-play');
+  const playIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  const stopIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>';
+  playBtn.onclick=()=>{
+    if(playing){playing=false;clearInterval(timer);playBtn.innerHTML=playIcon+'Play scale';return;}
+    ensureAudio();playing=true;let i=0;playBtn.innerHTML=stopIcon+'Stop';
+    const stepN=()=>{const idx=seq[i%seq.length];i++;noteWrap.querySelectorAll('.cy-note').forEach((x,j)=>x.classList.toggle('on',j===idx));trigger(inst,idx,true);};
+    stepN();timer=setInterval(stepN,1400);
+  };
+
+  const muteBtn=$('cy-mute');
+  const volOnIcon='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-3px;" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3Zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z"/></svg>';
+  const volOffIcon='<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-3px;" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3Z"/><path d="m16 9 5 6M21 9l-5 6" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>';
+  function setMuteIcon(){muteBtn.innerHTML=muted?volOffIcon:volOnIcon;muteBtn.classList.toggle('on',muted);muteBtn.setAttribute('aria-label',muted?'Unmute':'Mute');}
+  muteBtn.onclick=()=>{muted=!muted;if(master)master.gain.value=muted?0:0.29*vol;setMuteIcon();};
+  const volSld=$('cy-vol'),volOut=$('cy-volout');
+  volSld.addEventListener('input',()=>{vol=(+volSld.value)/100;volOut.textContent=volSld.value+'%';if(!muted&&master)master.gain.value=0.29*vol;});
+
+  modes=buildModes(inst,notes[noteIdx].base);swapped=true;trans=1;applyMeta();frame();
+})();
+</script>
+</body>
+</html>
